@@ -1,29 +1,29 @@
 FROM mcr.microsoft.com/powershell:alpine-3.8
 
 RUN apk add --no-cache \
-        ca-certificates \
-        \
-        # .NET Core dependencies
-        krb5-libs \
-        libgcc \
-        libintl \
-        libssl1.0 \
-        libstdc++ \
-        lttng-ust \
-        tzdata \
-        userspace-rcu \
-        zlib \
-	unzip
+    ca-certificates \
+    # .NET Core dependencies
+    krb5-libs \
+    libgcc \
+    libintl \
+    libssl1.0 \
+    libstdc++ \
+    lttng-ust \
+    tzdata \
+    userspace-rcu \
+    zlib \
+    unzip \
+    && rm -rf /tmp/* \ 
+    && rm -fr /var/cache/apk/*
 
 # Configure web servers to bind to port 80 when present
 ENV ASPNETCORE_URLS=http://+:80 \
     # Enable detection of running in a container
     DOTNET_RUNNING_IN_CONTAINER=true \
     # Set the invariant mode since icu_libs isn't included (see https://github.com/dotnet/announcements/issues/20)
-    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true
-
-# Install .NET Core
-ENV DOTNET_VERSION 2.2.7
+    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true \
+    # .NET Core version
+    DOTNET_VERSION=2.2.7
 
 RUN wget -O dotnet.tar.gz https://dotnetcli.blob.core.windows.net/dotnet/Runtime/$DOTNET_VERSION/dotnet-runtime-$DOTNET_VERSION-linux-musl-x64.tar.gz \
     && dotnet_sha512='e5e5437b57041395bf0af0b7472a615fb6aaef72a052a9b16d891cf0e9ea8a9cb09c28e0bf1d0f4808d5b61648324f3ab77dddcc7e426ba1fb91235a039eaaf1' \
@@ -36,17 +36,12 @@ RUN wget -O dotnet.tar.gz https://dotnetcli.blob.core.windows.net/dotnet/Runtime
 WORKDIR /root
 
 # Install VMware modules from PSGallery
-#SHELL [ "pwsh", "-command" ]
 RUN /usr/bin/pwsh -c Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 RUN /usr/bin/pwsh -c Install-Module VMware.PowerCLI,PowerNSX,PowervRA
 
 # Add the PowerCLI Example Scripts and Modules
-# using ZIP instead of a git pull to save at least 100MB
-#SHELL [ "sh", "-c"]
 RUN wget -O ./PowerCLI-Example-Scripts.zip https://github.com/vmware/PowerCLI-Example-Scripts/archive/master.zip && \
     unzip PowerCLI-Example-Scripts.zip && \
     rm -f PowerCLI-Example-Scripts.zip && \
     mv ./PowerCLI-Example-Scripts-master ./PowerCLI-Example-Scripts && \
     mv ./PowerCLI-Example-Scripts/Modules/* /opt/microsoft/powershell/6/Modules/
-
-#CMD ["/usr/bin/pwsh"]
