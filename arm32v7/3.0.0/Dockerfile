@@ -12,7 +12,7 @@ RUN \
       libssl1.0 \
       libicu60 \
       wget \
-      #icu-devtools \
+      icu-devtools \
       \
       # .NET Core dependencies
       libc6 \
